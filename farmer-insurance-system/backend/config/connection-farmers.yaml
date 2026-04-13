@@ -1,0 +1,116 @@
+name: farmer-insurance-network-farmersorg
+version: 1.0.0
+client:
+  organization: FarmersOrg
+  # Configure logging backend for SDK
+  logging:
+    level: info # Options: debug, info, warn, error
+  # Define crypto configuration for the client
+  cryptoconfig:
+    # Path where Identity keys and certs are stored
+    path: ../identities # Relative to where the Go app runs
+  # TLS settings for client when connecting to peers/orderers
+  tlsCerts:
+    # Use system certificate pool (useful for local development/testing)
+    systemCertPool: true 
+    # Client key and cert for mutual TLS - often handled by identity loading
+    # client:
+    #   key:
+    #     path: ...
+    #   cert:
+    #     path: ...
+channels:
+  insurancechannel: # Your channel name
+    orderers:
+      - orderer.example.com # Orderer hostname from docker-compose
+    peers:
+      peer0.farmers.example.com:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
+      peer0.insurance.example.com: # Include other org peers for discovery/endorsement
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true 
+      # Add government & dataprovider if needed for certain endorsements/queries later
+      # peer0.government.example.com: ...
+      # peer0.dataprovider.example.com: ...
+organizations:
+  FarmersOrg:
+    mspid: FarmersOrgMSP # Matches configtx.yaml
+    peers:
+      - peer0.farmers.example.com
+    certificateAuthorities:
+      - ca.farmers.example.com # CA name we'll define below
+    # Admin private key (if needed for enrollment - usually handled separately)
+    # adminPrivateKey:
+    #   path: ...
+    # Signed cert (if needed for enrollment - usually handled separately)
+    # signedCert:
+    #   path: ...
+  # Define other orgs if needed for cross-org interactions later
+  InsuranceOrg:
+    mspid: InsuranceOrgMSP
+    peers:
+      - peer0.insurance.example.com
+  OrdererOrg:
+    mspid: OrdererMSP
+    orderers:
+     - orderer.example.com
+orderers:
+  orderer.example.com:
+    url: grpcs://localhost:7050 # Use localhost and host port mapping
+    # TLS CA Cert for the orderer
+    tlsCACerts:
+      # Path to the Orderer Org's CA certificate
+      path: ../blockchain/organizations/ordererOrganizations/example.com/msp/tlscacerts/tlsca.example.com-cert.pem # Correct relative path from backend/
+    grpcOptions:
+      ssl-target-name-override: orderer.example.com # Matches hostname in cert
+      hostnameOverride: orderer.example.com
+peers:
+  peer0.farmers.example.com:
+    url: grpcs://localhost:7051 # Use localhost and host port mapping
+    tlsCACerts:
+      path: ../blockchain/organizations/peerOrganizations/farmers.example.com/msp/tlscacerts/ca.crt # Correct relative path
+    grpcOptions:
+      ssl-target-name-override: peer0.farmers.example.com # Matches hostname in cert
+      hostnameOverride: peer0.farmers.example.com
+  peer0.insurance.example.com:
+    url: grpcs://localhost:8051
+    tlsCACerts:
+      path: ../blockchain/organizations/peerOrganizations/insurance.example.com/msp/tlscacerts/ca.crt # Correct relative path
+    grpcOptions:
+      ssl-target-name-override: peer0.insurance.example.com
+      hostnameOverride: peer0.insurance.example.com
+  # Add government & dataprovider peers below if you need to target them directly later
+  # peer0.government.example.com:
+  #   url: grpcs://localhost:10051
+  #   tlsCACerts:
+  #     path: ../blockchain/organizations/peerOrganizations/government.example.com/msp/tlscacerts/ca.crt
+  #   grpcOptions:
+  #     ssl-target-name-override: peer0.government.example.com
+  #     hostnameOverride: peer0.government.example.com
+  # peer0.dataprovider.example.com:
+  #   url: grpcs://localhost:11051
+  #   tlsCACerts:
+  #     path: ../blockchain/organizations/peerOrganizations/dataprovider.example.com/msp/tlscacerts/ca.crt
+  #   grpcOptions:
+  #     ssl-target-name-override: peer0.dataprovider.example.com
+  #     hostnameOverride: peer0.dataprovider.example.com
+certificateAuthorities:
+  ca.farmers.example.com: # Define the CA for FarmersOrg
+    url: https://localhost:7054 # Use localhost and host port mapping
+    # CA's root TLS certificate
+    tlsCACerts:
+      # Path to the CA's certificate file generated during network setup
+      path: ../blockchain/organizations/fabric-ca/farmers/tls-cert.pem # Relative to Go app
+      # If using system cert pool, client certs might not be needed
+      # client: 
+      #   keyfile: ...
+      #   certfile: ...
+    registrar: # Optional: Define enrollment admin if needed later
+      enrollId: admin
+      enrollSecret: adminpw
+    caName: ca-farmers # Name defined in compose-ca.yaml

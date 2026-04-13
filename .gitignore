@@ -1,0 +1,4 @@
+/vendor
+serviceAccountKey.json
+*.json
+.env

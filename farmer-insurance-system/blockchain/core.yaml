@@ -1,0 +1,30 @@
+# This core.yaml file is configured to work with the 'peer' CLI
+# by providing just enough configuration to boot, while
+# allowing environment variables from setGlobals to take precedence.
+
+peer:
+  # This is a placeholder and will be overridden by the
+  # CORE_PEER_LOCALMSPID environment variable.
+  localMspId: PlaceholderMSP
+
+  # Enable TLS. This will be fully configured by the
+  # CORE_PEER_TLS_ROOTCERT_FILE env var.
+  tls:
+    enabled: true
+
+  # This BCCSP section IS required by the peer CLI.
+  # It tells the peer to use the Software (SW) provider.
+  # It does NOT specify a keystore path, so it will not
+  # conflict with the CORE_PEER_MSPCONFIGPATH variable.
+  BCCSP:
+    Default: SW
+    SW:
+      Hash: SHA2
+      Security: 256
+      # NOTE: The FileKeyStore section is INTENTIONALLY omitted
+      # to force the peer to use the MSP path from the environment.
+
+# Configure logging
+logging:
+  level:  INFO
+  format: '%{color}%{time:2006-01-02 15:04:05.000 MST} [%{module}] %{shortfunc} -> %{level:.4s} %{id:03x}%{color:reset} %{message}'

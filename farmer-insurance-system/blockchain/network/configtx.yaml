@@ -1,0 +1,207 @@
+# ---------------------------------------------------------------------------
+# "FourOrgs" - Four Organizations Configuration
+# ---------------------------------------------------------------------------
+Organizations:
+    - &OrdererOrg
+        Name: OrdererOrg
+        ID: OrdererMSP
+        MSPDir: ../organizations/ordererOrganizations/example.com/msp
+        OrdererEndpoints:
+            - orderer.example.com:7050
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('OrdererMSP.member')"
+            Writers:
+                Type: Signature
+                Rule: "OR('OrdererMSP.member')"
+            Admins:
+                Type: Signature
+                Rule: "OR('OrdererMSP.admin')"
+
+    - &FarmersOrg
+        Name: FarmersOrgMSP
+        ID: FarmersOrgMSP
+        MSPDir: ../organizations/peerOrganizations/farmers.example.com/msp
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('FarmersOrgMSP.admin', 'FarmersOrgMSP.peer', 'FarmersOrgMSP.client')"
+            Writers:
+                Type: Signature
+                Rule: "OR('FarmersOrgMSP.admin', 'FarmersOrgMSP.client')"
+            Admins:
+                Type: Signature
+                Rule: "OR('FarmersOrgMSP.admin')"
+            Endorsement:
+                Type: Signature
+                Rule: "OR('FarmersOrgMSP.peer')"
+
+    - &InsuranceOrg
+        Name: InsuranceOrgMSP
+        ID: InsuranceOrgMSP
+        MSPDir: ../organizations/peerOrganizations/insurance.example.com/msp
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('InsuranceOrgMSP.admin', 'InsuranceOrgMSP.peer', 'InsuranceOrgMSP.client')"
+            Writers:
+                Type: Signature
+                Rule: "OR('InsuranceOrgMSP.admin', 'InsuranceOrgMSP.client')"
+            Admins:
+                Type: Signature
+                Rule: "OR('InsuranceOrgMSP.admin')"
+            Endorsement:
+                Type: Signature
+                Rule: "OR('InsuranceOrgMSP.peer')"
+
+    - &GovernmentOrg
+        Name: GovernmentOrgMSP
+        ID: GovernmentOrgMSP
+        MSPDir: ../organizations/peerOrganizations/government.example.com/msp
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('GovernmentOrgMSP.admin', 'GovernmentOrgMSP.peer', 'GovernmentOrgMSP.client')"
+            Writers:
+                Type: Signature
+                Rule: "OR('GovernmentOrgMSP.admin', 'GovernmentOrgMSP.client')"
+            Admins:
+                Type: Signature
+                Rule: "OR('GovernmentOrgMSP.admin')"
+            Endorsement:
+                Type: Signature
+                Rule: "OR('GovernmentOrgMSP.peer')"
+
+    - &DataProviderOrg
+        Name: DataProviderOrgMSP
+        ID: DataProviderOrgMSP
+        MSPDir: ../organizations/peerOrganizations/dataprovider.example.com/msp
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('DataProviderOrgMSP.admin', 'DataProviderOrgMSP.peer', 'DataProviderOrgMSP.client')"
+            Writers:
+                Type: Signature
+                Rule: "OR('DataProviderOrgMSP.admin', 'DataProviderOrgMSP.client')"
+            Admins:
+                Type: Signature
+                Rule: "OR('DataProviderOrgMSP.admin')"
+            Endorsement:
+                Type: Signature
+                Rule: "OR('DataProviderOrgMSP.peer')"
+
+# ---------------------------------------------------------------------------
+# Capabilities
+# ---------------------------------------------------------------------------
+Capabilities:
+    Channel: &ChannelCapabilities
+        V2_0: true
+    Orderer: &OrdererCapabilities
+        V2_0: true
+    Application: &ApplicationCapabilities
+        V2_5: true
+
+# ---------------------------------------------------------------------------
+# Application Defaults
+# ---------------------------------------------------------------------------
+Application: &ApplicationDefaults
+    Organizations:
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+        LifecycleEndorsement:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Endorsement"
+        Endorsement:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Endorsement"
+    Capabilities:
+        <<: *ApplicationCapabilities
+
+# ---------------------------------------------------------------------------
+# Orderer Defaults
+# ---------------------------------------------------------------------------
+Orderer: &OrdererDefaults
+    OrdererType: etcdraft
+    EtcdRaft:
+        Consenters:
+            - Host: orderer.example.com
+              Port: 7050
+              ClientTLSCert: ../organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
+              ServerTLSCert: ../organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
+    BatchTimeout: 2s
+    BatchSize:
+        MaxMessageCount: 10
+        AbsoluteMaxBytes: 99 MB
+        PreferredMaxBytes: 512 KB
+    Organizations:
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+        BlockValidation:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+
+# ---------------------------------------------------------------------------
+# Channel Defaults
+# ---------------------------------------------------------------------------
+Channel: &ChannelDefaults
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+    Capabilities:
+        <<: *ChannelCapabilities
+
+# ---------------------------------------------------------------------------
+# Profiles
+# ---------------------------------------------------------------------------
+Profiles:
+    FourOrgsOrdererGenesis:
+        <<: *ChannelDefaults
+        Orderer:
+            <<: *OrdererDefaults
+            Organizations:
+                - *OrdererOrg
+            Capabilities:
+                <<: *OrdererCapabilities
+        Consortiums:
+            SampleConsortium:
+                Organizations:
+                    - *FarmersOrg
+                    - *InsuranceOrg
+                    - *GovernmentOrg
+                    - *DataProviderOrg
+    FourOrgsChannel:
+        Consortium: SampleConsortium
+        <<: *ChannelDefaults
+        Application:
+            <<: *ApplicationDefaults
+            Organizations:
+                - *FarmersOrg
+                - *InsuranceOrg
+                - *GovernmentOrg
+                - *DataProviderOrg
+            Capabilities:
+                <<: *ApplicationCapabilities

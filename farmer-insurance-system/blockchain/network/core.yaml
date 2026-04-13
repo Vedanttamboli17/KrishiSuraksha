@@ -1,0 +1,15 @@
+peer:
+  id: farmerPeer
+  networkId: farmers-network
+  address: 127.0.0.1:7051
+
+logging:
+  level: debug
+
+bccsp:
+  default: SW
+  SW:
+    Hash: SHA2
+    Security: 256
+    FileKeyStore:
+      KeyStore: ${FABRIC_CFG_PATH}/msp/keystore
